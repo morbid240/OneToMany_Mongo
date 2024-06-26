@@ -26,7 +26,7 @@ class Product(Document):
 
     # The delete rule to protect Product from losing Order Items will be in main.py.
     orderItems = ListField(ReferenceField('OrderItem'))
-    # Uniqueness constraint
+    # Uniqueness constraint/ index creation
     meta = {'collection': 'products',
             'indexes': [
                 {'unique': True, 'fields': ['productName', 'productCode'], 'name': 'products_pk'}

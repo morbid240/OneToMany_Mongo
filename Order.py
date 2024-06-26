@@ -84,9 +84,9 @@ class Order(Document):
         Returns a string representation of the Order instance.
         :return: A string representation of the Order instance.
         """
-        results = f'Order: Placed by - {self.customerName} placed on {self.orderDate} status: {self.get_current_status()}'
+        results = f'Order: Placed by - {self.customerName} placed on {self.orderDate}, sold by: {self.soldBy} status: {self.get_current_status()}'
         for orderItem in self.orderItems:
-            results = results + '\n\t' + f'Item: {orderItem.product}'
+            results = results + '\n\t' + f'Item: {orderItem.product}, Qty: {orderItem.quantity}'
         return results
 
     def add_item(self, item):

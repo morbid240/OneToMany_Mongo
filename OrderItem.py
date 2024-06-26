@@ -35,7 +35,7 @@ class OrderItem(Document):
                 {'unique': True, 'fields': ['order', 'product'], 'name': 'order_items_pk'}
             ]}
 
-    def __init__(self, order: Order, product: str, quantity: int, *args, **values):
+    def __init__(self, order: Order, product: Product, quantity: int, *args, **values):
         """
         Create a new instance of OrderItem.
         :param order:       The order that this item belongs to.

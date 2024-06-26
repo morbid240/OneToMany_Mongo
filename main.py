@@ -50,6 +50,7 @@ def add_product():
     new_product = None
     while not success:
         buy_price = input("Enter the buy price -->")
+        product_date = prompt_for_date("Enter the starting date of the product listed")
         new_product = Product(
             input("Enter the product code-->"),
             input("Enter the product name-->"),
@@ -58,7 +59,6 @@ def add_product():
             buy_price,
             input("Enter the msrp-->")
         )
-
         # check for violated constraints
         violated_constraints = unique_general(new_product)
         if len(violated_constraints) > 0:
@@ -66,11 +66,11 @@ def add_product():
                 print('Your input values violated constraint: ', violated_constraint)
             print('try again')
         else:
-            # The first "price change" is the product being created which would be buy price
+            # The first "price history" is the first price being added
             new_product.change_price(
                 PriceHistory(
                     buy_price,
-                    datetime.now()
+                    product_date
                 )
             )
             try:
@@ -92,8 +92,8 @@ def update_product():
     # "Declare" the product variable, more for cosmetics than anything else.
     product: Product
     while not success:
-        new_price = input('Enter new price-->')
         product = select_product()  # Find a product to add new price
+        new_price = input('Enter new price-->')
         price_change_date = prompt_for_date('Date and time of the price change: ')
         try:
             product.change_price(PriceHistory(new_price, price_change_date))
@@ -107,9 +107,10 @@ def delete_product():
     """Deletes a document from product collection. Doesnt allow user to delete a product not in database.
     Doesnt allow user to delete a product that is mentioned in any orders."""
     product = select_product()  # prompt the user for an order to delete
-    items = product.orderItems  # retrieve the list of items in this order
+    items = product.orderItems  # retrieve the list of items in this product
     for item in items:
         # delete items before product delete, so mongo doesnt complain
+        print(f"Deleting item: {item} from product")
         item.delete()
     # Now that all the items on the order are removed, we can safely remove the order itself.
     product.delete()
@@ -127,12 +128,18 @@ def add_order_item():
     success: bool = False
     new_order_item: OrderItem
     order: Order
+    product: Product
     while not success:
+        print("Adding a new order item. Select the order")
         order = select_order()  # Prompt the user for an order to operate on.
+        print("Order selected. Select the product")
+        product = select_product() # Prompt user to select a product to order
         # Create a new OrderItem instance.
-        new_order_item = OrderItem(order,
-                                   input('Product Name --> '),
-                                   int(input('Quantity --> ')))
+        new_order_item = OrderItem(
+                            order,
+                            product,
+                            int(input('Quantity --> '))
+        )
         # Make sure that this adheres to the existing uniqueness constraints.
         # I COULD use print_exception after MongoEngine detects any uniqueness constraint violations, but
         # MongoEngine will only report one uniqueness constraint violation at a time.  I want them all.
@@ -174,6 +181,15 @@ def delete_order_item():
 def select_order_item() -> OrderItem:
     return select_general(OrderItem)
 
+
+def display_order():
+    """    d.	Display an order.
+        i.	Prompt the user for which order they want to display.
+        ii.	Print out the information on the order itself.
+        iii.	And each of the items within the order."""
+    print("Enter the order you wish to display")
+    order = select_order()
+    print(order.__str__)
 
 """*****************METHODS FOR ORDER CLASS******************"""
 def select_order() -> Order:
