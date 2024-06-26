@@ -19,7 +19,7 @@ class Utilities:
         print("Prompting for the password.")
         while True:
             cluster = "mongodb+srv://malcolmroddy01:MQa8sWe%3F9%3Dsm8w%3E@cluster0.y24wkyn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-            database_name = input('Database name to use --> ')
+            database_name = "mydatabase"
             client = connect(db=database_name, host=cluster)
             try:
                 junk = client.server_info()  # Test the connection
