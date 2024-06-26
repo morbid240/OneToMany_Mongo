@@ -1,7 +1,20 @@
+"""
+Malcolm Roddy
+CECS 323
+One to Many update for mongodb
+
+Code modified from sample:
+    1. import new classes PriceHistory and Product
+"""
+
+
+
 from ConstraintUtilities import select_general, unique_general, prompt_for_date
 from Utilities import Utilities
 from Order import Order
 from OrderItem import OrderItem
+from Product import Product
+from PriceHistory import PriceHistory
 from StatusChange import StatusChange
 from CommandLogger import CommandLogger, log
 from pymongo import monitoring
@@ -9,6 +22,7 @@ from Menu import Menu
 from Option import Option
 from menu_definitions import menu_main, add_select, list_select, select_select, delete_select, update_select
 import CommonUtilities as CU  # Utilities that work for the sample code & the worked HW assignment.
+from _datetime import datetime
 
 """
 This protects Order from deletions in OrderItem of any of the objects reference by Order
@@ -19,53 +33,92 @@ it makes it impossible to remove OrderItem instances.  But you get the idea how 
 
 # OrderItem.register_delete_rule(Order, 'orderItems', mongoengine.DENY)
 
-def menu_loop(menu: Menu):
-    """Little helper routine to just keep cycling in a menu until the user signals that they
-    want to exit.
-    :param  menu:   The menu that the user will see."""
-    action: str = ''
-    while action != menu.last_action():
-        action = menu.menu_prompt()
-        print('next action: ', action)
-        exec(action)
+"""
+Todo: 
+    d.	Display an order.
+        i.	Prompt the user for which order they want to display.
+        ii.	Print out the information on the order itself.
+        iii.	And each of the items within the order.
+
+"""
+"""***************METHODS FOR PRODUCT CLASS*****************"""
+def add_product():
+    """
+    Adds a new document to the product collection. Protects user from entering a duplicate product
+    with respect to both uniqueness constraints"""
+    success: bool = False
+    new_product = None
+    while not success:
+        buy_price = input("Enter the buy price -->")
+        new_product = Product(
+            input("Enter the product code-->"),
+            input("Enter the product name-->"),
+            input("Enter the product description-->"),
+            int(input("Enter the quantity in stock-->")),
+            buy_price,
+            input("Enter the msrp-->")
+        )
+
+        # check for violated constraints
+        violated_constraints = unique_general(new_product)
+        if len(violated_constraints) > 0:
+            for violated_constraint in violated_constraints:
+                print('Your input values violated constraint: ', violated_constraint)
+            print('try again')
+        else:
+            # The first "price change" is the product being created which would be buy price
+            new_product.change_price(
+                PriceHistory(
+                    buy_price,
+                    datetime.now()
+                )
+            )
+            try:
+                new_product.save()
+                success = True
+            except Exception as e:
+                print('Errors storing the new order:')
+                print(Utilities.print_exception(e))
 
 
-def add():
-    menu_loop(add_select)
+def update_product():
+    """
+    Change the price of an existing product. When changed we add to the PriceHistory
+        Make sure that the change date and time for the new price is < right now (no changing prices in the future).
+        Make sure that the change date and time for the price change is > the latest price change.
+
+    """
+    success: bool = False
+    # "Declare" the product variable, more for cosmetics than anything else.
+    product: Product
+    while not success:
+        new_price = input('Enter new price-->')
+        product = select_product()  # Find a product to add new price
+        price_change_date = prompt_for_date('Date and time of the price change: ')
+        try:
+            product.change_price(PriceHistory(new_price, price_change_date))
+            product.save()
+            success = True
+        except ValueError as VE:
+            print('Attempted status change failed because:')
+            print(VE)
+
+def delete_product():
+    """Deletes a document from product collection. Doesnt allow user to delete a product not in database.
+    Doesnt allow user to delete a product that is mentioned in any orders."""
+    product = select_product()  # prompt the user for an order to delete
+    items = product.orderItems  # retrieve the list of items in this order
+    for item in items:
+        # delete items before product delete, so mongo doesnt complain
+        item.delete()
+    # Now that all the items on the order are removed, we can safely remove the order itself.
+    product.delete()
 
 
-def list_members():
-    menu_loop(list_select)
+def select_product() -> Product:
+    return select_general(Product)
 
-
-def select():
-    menu_loop(select_select)
-
-
-def delete():
-    menu_loop(delete_select)
-
-
-def update():
-    menu_loop(update_select)
-
-
-def select_order() -> Order:
-    return select_general(Order)
-
-
-def select_order_item() -> OrderItem:
-    return select_general(OrderItem)
-
-
-def prompt_for_enum(prompt: str, cls, attribute_name: str):
-    return CU.prompt_for_enum(prompt, cls, attribute_name)
-
-
-def add_order():
-    CU.add_order()
-
-
+"""*****************METHODS FOR ORDERITEMS CLASS******************"""
 def add_order_item():
     """
     Add an item to an existing order.
@@ -100,14 +153,6 @@ def add_order_item():
                 print(Utilities.print_exception(e))
 
 
-def update_order():
-    CU.update_order()
-
-
-def delete_order():
-    CU.delete_order()
-
-
 def delete_order_item():
     """
     Remove just one item from an existing order.
@@ -124,6 +169,63 @@ def delete_order_item():
                            'Choose which order item to remove', menu_items).menu_prompt())
     # Update the order to no longer include that order item in its MongoDB list of order items.
     order.save()
+
+
+def select_order_item() -> OrderItem:
+    return select_general(OrderItem)
+
+
+"""*****************METHODS FOR ORDER CLASS******************"""
+def select_order() -> Order:
+    return select_general(Order)
+
+
+def prompt_for_enum(prompt: str, cls, attribute_name: str):
+    return CU.prompt_for_enum(prompt, cls, attribute_name)
+
+
+def add_order():
+    CU.add_order()
+
+
+def update_order():
+    CU.update_order()
+
+
+def delete_order():
+    CU.delete_order()
+
+
+"""******************MENU METHODS*****************"""
+def menu_loop(menu: Menu):
+    """Little helper routine to just keep cycling in a menu until the user signals that they
+    want to exit.
+    :param  menu:   The menu that the user will see."""
+    action: str = ''
+    while action != menu.last_action():
+        action = menu.menu_prompt()
+        print('next action: ', action)
+        exec(action)
+
+
+def add():
+    menu_loop(add_select)
+
+
+def list_members():
+    menu_loop(list_select)
+
+
+def select():
+    menu_loop(select_select)
+
+
+def delete():
+    menu_loop(delete_select)
+
+
+def update():
+    menu_loop(update_select)
 
 
 if __name__ == '__main__':
