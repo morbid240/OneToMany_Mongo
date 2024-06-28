@@ -85,34 +85,28 @@ class Product(Document):
         return results
 
 
-    """Handling order_items list, deletion and insertion. COPIED from Order"""
+    """Handling order_items list, deletion and insertion."""
     def add_item(self, item):
         """
-        Adds an item to the Order.  Note that the item argument is an instance of the
+        Adds an item to the product.  Note that the item argument is an instance of the
         OrderItem class, and as such has both the product that is ordered and
         the quantity.  We cannot have more than one OrderItem for any Order for the
         same product.
-        :param item:    An instance of OrderItem class to be added to this Order.  If
-        an OrderItem    this Product is already in the order, this call is ignored.
-        :return:    None
         """
         for already_ordered_item in self.orderItems:
             if item.equals(already_ordered_item):
                 return  # Already in the order, don't add it.
         self.orderItems.append(item)
-        # There is no need to update the OrderItem to point to this Order because the
+        # There is no need to update the OrderItem to point to this Product because the
         # constructor for OrderItem requires an Order and that constructor calls this
         # method.  Of course, the liability here is that someone could create an instance
         # of OrderItem withOUT using our constructor.  Argh.
+
 
     def remove_item(self, item):
         """
         Removes a Product from the order.  Note that the item argument is an instance of the
         OrderItem class, but we ignore the quantity.
-        :param item:    An instance of the OrderItem class that includes the Product that
-                        we are removing from the order.  If this Product is not already in
-                        the order, the call is ignored.
-        :return:        None
         """
         for already_ordered_item in self.orderItems:
             # Check to see whether this next order item is the one that they want to delete

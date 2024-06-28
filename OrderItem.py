@@ -60,6 +60,11 @@ class OrderItem(Document):
         """
         return self.product
 
+    def get_order(self):
+        """return identity of product order item refers to """
+        return self.order
+
+
     def equals(self, other) -> bool:
         """
         Check if this product is the same product as the other OrderItem instance.

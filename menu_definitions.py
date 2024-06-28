@@ -1,3 +1,12 @@
+"""
+Malcolm Roddy
+CECS 323
+One to Many update for mongodb
+
+
+added menu options for displaying order, add and delete functions for
+product
+"""
 from Menu import Menu
 import logging
 from Option import Option

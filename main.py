@@ -2,9 +2,6 @@
 Malcolm Roddy
 CECS 323
 One to Many update for mongodb
-
-Code modified from sample:
-    1. import new classes PriceHistory and Product
 """
 
 
@@ -33,14 +30,6 @@ it makes it impossible to remove OrderItem instances.  But you get the idea how 
 
 # OrderItem.register_delete_rule(Order, 'orderItems', mongoengine.DENY)
 
-"""
-Todo: 
-    d.	Display an order.
-        i.	Prompt the user for which order they want to display.
-        ii.	Print out the information on the order itself.
-        iii.	And each of the items within the order.
-
-"""
 """***************METHODS FOR PRODUCT CLASS*****************"""
 def add_product():
     """
